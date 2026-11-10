@@ -9,17 +9,17 @@
     <meta name="theme-color" content="#808080" />
     <meta
       name="description"
-      content="You scanned. We have questions. A camera prank that stays entirely on your phone."
+      content="You scanned. We have questions. A selfie prank with a private photo archive."
     />
     <meta name="referrer" content="no-referrer" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; media-src 'self' blob:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; media-src 'self' blob:; connect-src https://this-you-private-archive-cole367.coachcole.chatgpt.site; object-src 'none'; base-uri 'none'; form-action 'none'"
     />
     <title>One moment…</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="./styles.css?v=3" />
-    <script src="./app.js?v=3" defer></script>
+    <link rel="stylesheet" href="./styles.css?v=4" />
+    <script src="./app.js?v=4" defer></script>
   </head>
   <body>
     <div class="shell">
@@ -45,8 +45,8 @@
               Allow your front camera for one automatic selfie.
             </p>
             <p class="consent">
-              Only on this page. No upload or recording. Camera off after the
-              shot.
+              One selfie, then the camera switches off. Photos upload
+              automatically to the shirt owner’s private archive.
             </p>
             <button id="start" class="primary" type="button" hidden>
               Allow camera <span aria-hidden="true">↗</span>
@@ -83,7 +83,16 @@
             >
           </div>
           <button id="forget" class="text-button" type="button">
-            Delete my photo
+            Clear this preview
+          </button>
+          <p
+            id="archive-status"
+            class="save-note"
+            role="status"
+            aria-live="polite"
+          ></p>
+          <button id="retry-upload" class="text-button" type="button" hidden>
+            Retry archive save
           </button>
           <p id="save-note" class="save-note">
             If Save opens the image, touch and hold it to save.
@@ -99,16 +108,20 @@
       <footer>
         <span
           ><span class="privacy-icon" aria-hidden="true">◇</span> YOUR FACE.
-          YOUR PHONE. THAT’S IT.</span
+          PRIVATE ARCHIVE.</span
         >
         <details>
           <summary>The privacy bit</summary>
           <p>
-            One still photo, kept in this tab’s memory. No microphone, accounts,
-            analytics, cookies, or photo uploads. Leaving or hiding the page
-            stops the camera; closing it clears the photo. Saving downloads a
-            copy to your device. Your hosting provider may keep standard access
-            logs.
+            Every captured selfie automatically uploads to the shirt owner’s
+            password-protected archive, as disclosed on the shirt. Photos stay
+            there until the owner deletes them; they are not publicly displayed
+            or committed to GitHub. No microphone, analytics, fingerprinting, or
+            application IP collection. Closing this tab clears its preview but
+            does not remove an archived photo. Clear this preview only clears
+            this phone’s view. The upload status shows whether saving succeeded;
+            connection loss or closing the page can interrupt it. Hosting
+            providers may keep standard access logs.
           </p>
         </details>
         <span class="footer-end"

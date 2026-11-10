@@ -2,3 +2,6 @@ node_modules/
 dist/
 test-results/
 playwright-report/
+.archive-host/
+.archive-owner.txt
+.archive-worker.tar.gz

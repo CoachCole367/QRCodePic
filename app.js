@@ -1,5 +1,8 @@
 const $ = (id) => document.getElementById(id);
 const video = $("video");
+const ARCHIVE_ORIGIN =
+  "https://this-you-private-archive-cole367.coachcole.chatgpt.site";
+let currentUpload = null;
 let stream = null;
 let photoUrl = null;
 let attempt = 0;
@@ -20,10 +23,57 @@ function stopCamera() {
 }
 
 function clearPhoto() {
+  currentUpload = null;
   $("photo").removeAttribute("src");
   $("download").removeAttribute("href");
   if (photoUrl) URL.revokeObjectURL(photoUrl);
   photoUrl = null;
+}
+
+function archiveStatus(record, message, retry = false) {
+  if (currentUpload !== record) return;
+  $("archive-status").textContent = message;
+  $("retry-upload").hidden = !retry;
+}
+
+async function uploadPhoto(record) {
+  if (record.inFlight || !record.blob) return;
+  record.inFlight = true;
+  archiveStatus(record, "Saving to the shirt owner’s private archive…");
+  try {
+    for (let tries = 0; tries < 3; tries++) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
+      try {
+        const response = await fetch(`${ARCHIVE_ORIGIN}/uploads`, {
+          method: "POST",
+          credentials: "omit",
+          referrerPolicy: "no-referrer",
+          headers: { "Content-Type": "image/jpeg", "X-Capture-Id": record.id },
+          body: record.blob,
+          signal: controller.signal,
+        });
+        if (response.ok && (await response.json()).saved === true) {
+          archiveStatus(record, "Saved to the shirt owner’s private archive.");
+          return;
+        }
+        if (response.status < 500 && response.status !== 429) break;
+      } catch {
+        // An interrupted upload may already be saved; retries reuse its capture ID.
+      } finally {
+        clearTimeout(timeout);
+      }
+      if (tries < 2)
+        await new Promise((resolve) => setTimeout(resolve, 500 * (tries + 1)));
+    }
+    archiveStatus(
+      record,
+      "Couldn’t confirm the archive save. Keep this page open and retry.",
+      true,
+    );
+  } finally {
+    record.inFlight = false;
+  }
 }
 
 function reset(message = "Allow your front camera for one automatic selfie.") {
@@ -95,6 +145,10 @@ async function capture(id = attempt) {
       canvas.height,
     );
     stopCamera(); // Release the hardware before encoding or revealing anything.
+    // Encode a compact archive JPEG alongside the original downloadable PNG.
+    const archiveBlob = new Promise((resolve) =>
+      canvas.toBlob(resolve, "image/jpeg", 0.85),
+    );
     const blob = await new Promise((resolve) =>
       canvas.toBlob(resolve, "image/png"),
     );
@@ -113,6 +167,18 @@ async function capture(id = attempt) {
     $("reveal-title").focus({ preventScroll: true });
     window.scrollTo({ top: 0, behavior: "instant" });
     busy = false;
+    const record = { id: crypto.randomUUID(), blob: null, inFlight: false };
+    currentUpload = record;
+    archiveStatus(record, "Saving to the shirt owner’s private archive…");
+    void archiveBlob.then((blob) => {
+      record.blob = blob;
+      if (blob) void uploadPhoto(record);
+      else
+        archiveStatus(
+          record,
+          "The archive photo couldn’t be prepared. Retake to try again.",
+        );
+    });
   } catch {
     reset("The photo couldn’t be captured. Tap Allow camera to try again.");
   }
@@ -246,13 +312,18 @@ $("retake").addEventListener("click", () => {
   startCamera();
 });
 $("forget").addEventListener("click", () => {
-  reset("Photo deleted from this page. Nothing was uploaded.");
+  reset(
+    "Preview cleared. Any uploaded copy remains in the shirt owner’s private archive.",
+  );
   clearPhoto();
   document.body.classList.remove("captured");
   document.title = "One moment…";
   $("reveal").hidden = true;
   $("setup").hidden = false;
   $("start").focus();
+});
+$("retry-upload").addEventListener("click", () => {
+  if (currentUpload) void uploadPhoto(currentUpload);
 });
 document.addEventListener("visibilitychange", () => {
   if (document.hidden)

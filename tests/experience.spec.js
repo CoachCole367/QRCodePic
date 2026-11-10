@@ -3,6 +3,34 @@ import { readFile } from "node:fs/promises";
 import { PNG } from "pngjs";
 import jsQR from "jsqr";
 
+const archiveEndpoint =
+  "https://this-you-private-archive-cole367.coachcole.chatgpt.site/uploads";
+test.beforeEach(async ({ page }) => {
+  // Synthetic camera photos never leave the test browser.
+  await page.route(archiveEndpoint, (route) =>
+    route.fulfill({
+      status: 201,
+      contentType: "application/json",
+      body: JSON.stringify({
+        saved: true,
+        id: route.request().headers()["x-capture-id"],
+      }),
+    }),
+  );
+});
+
+test("preview server never serves owner credentials or Git metadata", async ({
+  request,
+}) => {
+  for (const path of [
+    "/.archive-owner.txt",
+    "/.git/config",
+    "/.archive-host/.git/config",
+  ]) {
+    expect((await request.get(path)).status()).toBe(404);
+  }
+});
+
 async function watchCamera(page) {
   await page.addInitScript(() => {
     window.cameraCalls = [];
@@ -64,16 +92,18 @@ test("automatically captures real video pixels, stops camera, downloads, retakes
   await page.getByRole("button", { name: /Retake/ }).click();
   await expect(page.locator("#reveal")).toBeVisible();
   expect(await page.evaluate(() => window.cameraCalls.length)).toBe(2);
-  await page.getByRole("button", { name: "Delete my photo" }).click();
+  await expect(page.locator("#archive-status")).toContainText("Saved to");
+  await page.getByRole("button", { name: "Clear this preview" }).click();
   await expect(page.locator("#setup")).toBeVisible();
   await expect(page.locator("#photo")).not.toHaveAttribute("src");
   await expect(page.locator("#download")).not.toHaveAttribute("href");
   expect(
     requests.every(
       (req) =>
-        req.method === "GET" &&
-        (req.url.startsWith("http://localhost:4173/") ||
-          req.url.startsWith("blob:http://localhost:4173/")),
+        (req.method === "POST" && req.url === archiveEndpoint) ||
+        (req.method === "GET" &&
+          (req.url.startsWith("http://localhost:4173/") ||
+            req.url.startsWith("blob:http://localhost:4173/"))),
     ),
   ).toBe(true);
   expect(
@@ -83,6 +113,62 @@ test("automatically captures real video pixels, stops camera, downloads, retakes
       document.cookie,
     ]),
   ).toEqual([0, 0, ""]);
+});
+
+test("automatically uploads each capture as a JPEG without delaying the reveal", async ({
+  page,
+}) => {
+  const uploads = [];
+  await page.route(archiveEndpoint, async (route) => {
+    uploads.push(route.request());
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    await route.fulfill({
+      status: 201,
+      contentType: "application/json",
+      body: '{"saved":true}',
+    });
+  });
+  await page.goto("/");
+  await expect(page.locator("#reveal")).toBeVisible();
+  await expect(page.locator("#archive-status")).toContainText("Saving to");
+  await expect(page.locator("#archive-status")).toContainText("Saved to");
+  expect(uploads).toHaveLength(1);
+  expect(uploads[0].headers()["content-type"]).toBe("image/jpeg");
+  const bytes = uploads[0].postDataBuffer();
+  expect([...bytes.subarray(0, 2)]).toEqual([255, 216]);
+  expect([...bytes.subarray(-2)]).toEqual([255, 217]);
+  const firstId = uploads[0].headers()["x-capture-id"];
+  await page.getByRole("button", { name: /Retake/ }).click();
+  await expect(page.locator("#reveal")).toBeVisible();
+  await expect(page.locator("#archive-status")).toContainText("Saved to");
+  expect(uploads).toHaveLength(2);
+  expect(uploads[1].headers()["x-capture-id"]).not.toBe(firstId);
+});
+
+test("upload failure preserves the photo and retries with the same capture ID", async ({
+  page,
+}) => {
+  const ids = [];
+  await page.route(archiveEndpoint, (route) => {
+    ids.push(route.request().headers()["x-capture-id"]);
+    return route.fulfill({ status: 413, body: "Too large" });
+  });
+  await page.goto("/");
+  await expect(page.locator("#reveal")).toBeVisible();
+  await expect(page.locator("#retry-upload")).toBeVisible();
+  await expect(page.locator("#photo")).toHaveAttribute("src", /^blob:/);
+  await page.route(archiveEndpoint, (route) => {
+    ids.push(route.request().headers()["x-capture-id"]);
+    return route.fulfill({
+      status: 201,
+      contentType: "application/json",
+      body: '{"saved":true}',
+    });
+  });
+  await page.locator("#retry-upload").click();
+  await expect(page.locator("#archive-status")).toContainText("Saved to");
+  expect(ids).toHaveLength(2);
+  expect(ids[0]).toBe(ids[1]);
 });
 
 for (const [name, message] of [

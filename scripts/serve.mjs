@@ -18,6 +18,9 @@ http
       const pathname = decodeURIComponent(
         new URL(req.url, "http://localhost").pathname,
       );
+      // Local owner credentials and checkout metadata are never preview assets.
+      if (pathname.split(/[\\/]/).some((segment) => segment.startsWith(".")))
+        throw new Error("Hidden path");
       let file = path.resolve(root, `.${pathname}`);
       if (file !== root && !file.startsWith(`${root}${path.sep}`))
         throw new Error("Outside root");

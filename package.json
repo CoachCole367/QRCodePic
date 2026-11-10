@@ -7,8 +7,8 @@
     "dev": "node scripts/serve.mjs",
     "build": "node scripts/build.mjs",
     "qr": "node scripts/qr.mjs",
-    "test": "playwright test",
-    "lint": "node --check app.js && node --check scripts/build.mjs && node --check scripts/qr.mjs && node --check scripts/serve.mjs"
+    "test": "node --test backend/worker.test.mjs && playwright test",
+    "lint": "node --check app.js && node --check backend/worker.js && node --check scripts/build.mjs && node --check scripts/qr.mjs && node --check scripts/serve.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.1",
