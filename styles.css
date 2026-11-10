@@ -304,7 +304,19 @@ details[open] p {
   }
 }
 
-/* Keep the permission screen quiet; reveal branding only after capture. */
+/* Leave only the browser's own permission prompt visible while waiting. */
+:root.pending,
+.pending body {
+  background: #808080;
+  color-scheme: light;
+}
+.pending header,
+.pending footer,
+.pending .camera-controls {
+  display: none;
+}
+
+/* Show branding only after capture, and recovery controls only when needed. */
 body:not(.captured) header,
 body:not(.captured) footer {
   display: none;

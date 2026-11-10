@@ -86,7 +86,6 @@ test("automatically captures real video pixels, stops camera, downloads, retakes
 });
 
 for (const [name, message] of [
-  ["NotAllowedError", "Camera access is off"],
   ["NotFoundError", "No camera found"],
   ["NotReadableError", "camera is busy"],
   ["AbortError", "interrupted"],
@@ -123,7 +122,7 @@ test("offers a manual capture when autoplay is blocked", async ({ page }) => {
   await expect(page.locator("#reveal")).toBeVisible();
 });
 
-test("stops a stream granted after cancellation", async ({ page }) => {
+test("stops a stream granted after leaving the page", async ({ page }) => {
   await page.addInitScript(() => {
     const original = navigator.mediaDevices.getUserMedia.bind(
       navigator.mediaDevices,
@@ -143,7 +142,7 @@ test("stops a stream granted after cancellation", async ({ page }) => {
   await expect
     .poll(() => page.evaluate(() => window.permissionRequested))
     .toBe(true);
-  await page.locator("#cancel").click();
+  await page.evaluate(() => window.dispatchEvent(new Event("pagehide")));
   await page.evaluate(() => window.grant());
   await expect
     .poll(() => page.evaluate(() => window.cameraTracks.length))
@@ -257,7 +256,7 @@ test("narrow and desktop layouts fit without horizontal overflow", async ({
   }
 });
 
-test("opening stays nearly blank and requests permission without a timed delay", async ({
+test("opening stays fully grey with no words while permission is pending", async ({
   page,
 }) => {
   await page.addInitScript(() => {
@@ -278,11 +277,74 @@ test("opening stays nearly blank and requests permission without a timed delay",
   await expect(page.locator("footer")).toBeHidden();
   await expect(page.locator("#reveal")).toBeHidden();
   await expect(page.locator("#start")).toBeHidden();
-  await expect(page.locator("#status")).toBeVisible();
-  await expect(page.locator(".consent")).toBeVisible();
+  await expect(page.locator("#status")).toBeHidden();
+  await expect(page.locator(".consent")).toBeHidden();
+  await expect(page.locator("#cancel")).toBeHidden();
+  expect(await page.locator("body").innerText()).toBe("");
+  await expect(page.locator("html")).toHaveCSS(
+    "background-color",
+    "rgb(128, 128, 128)",
+  );
   const videoSize = await page.locator("#video").boundingBox();
   expect(videoSize.width).toBe(1);
   expect(videoSize.height).toBe(1);
+  const screen = PNG.sync.read(await page.screenshot());
+  expect(
+    screen.data.every(
+      (value, index) => value === (index % 4 === 3 ? 255 : 128),
+    ),
+  ).toBe(true);
+});
+
+test("permission denial replaces the page with the fictional ducks article", async ({
+  page,
+}) => {
+  const destination = "https://en.wikipedia.org/wiki/List_of_fictional_ducks";
+  await page.route(destination, (route) =>
+    route.fulfill({
+      contentType: "text/html",
+      body: "<h1>List of fictional ducks</h1>",
+    }),
+  );
+  await page.addInitScript(() => {
+    navigator.mediaDevices.getUserMedia = () =>
+      Promise.reject(new DOMException("Denied", "NotAllowedError"));
+  });
+  await page.goto("/");
+  await expect(page).toHaveURL(destination);
+  await expect(
+    page.getByRole("heading", { name: "List of fictional ducks" }),
+  ).toBeVisible();
+});
+
+test("granting permission transitions directly from grey to the selfie reveal", async ({
+  page,
+}) => {
+  await watchCamera(page);
+  await page.addInitScript(() => {
+    const getUserMedia = navigator.mediaDevices.getUserMedia.bind(
+      navigator.mediaDevices,
+    );
+    navigator.mediaDevices.getUserMedia = async (constraints) => {
+      await new Promise((resolve) => {
+        window.grantCamera = resolve;
+      });
+      return getUserMedia(constraints);
+    };
+  });
+  await page.goto("/");
+  await expect
+    .poll(() => page.evaluate(() => typeof window.grantCamera))
+    .toBe("function");
+  expect(await page.locator("body").innerText()).toBe("");
+  await page.evaluate(() => window.grantCamera());
+  await expect(page.locator("#reveal")).toBeVisible();
+  await expect(page.locator("html")).not.toHaveClass(/pending/);
+  expect(
+    await page.evaluate(() =>
+      window.cameraTracks.every((track) => track.readyState === "ended"),
+    ),
+  ).toBe(true);
 });
 
 test("printed PNG decodes to exactly the configured HTTPS destination", async () => {

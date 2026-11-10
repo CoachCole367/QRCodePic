@@ -6,6 +6,13 @@ let attempt = 0;
 let busy = false;
 let autoStart;
 
+function setPending(pending) {
+  document.documentElement.classList.toggle("pending", pending);
+  document.querySelector('meta[name="theme-color"]').content = pending
+    ? "#808080"
+    : "#111210";
+}
+
 function stopCamera() {
   stream?.getTracks().forEach((track) => track.stop());
   stream = null;
@@ -20,6 +27,7 @@ function clearPhoto() {
 }
 
 function reset(message = "Allow your front camera for one automatic selfie.") {
+  setPending(false);
   cancelAnimationFrame(autoStart);
   attempt++;
   stopCamera();
@@ -31,6 +39,7 @@ function reset(message = "Allow your front camera for one automatic selfie.") {
 }
 
 function manual(message) {
+  setPending(false);
   $("status").textContent = message;
   $("start").hidden = true;
   $("capture").hidden = false;
@@ -96,6 +105,7 @@ async function capture(id = attempt) {
     photoUrl = URL.createObjectURL(blob);
     $("photo").src = photoUrl;
     $("download").href = photoUrl;
+    setPending(false);
     document.body.classList.add("captured");
     document.title = "THIS YOU?";
     $("setup").hidden = true;
@@ -111,6 +121,7 @@ async function capture(id = attempt) {
 async function startCamera() {
   cancelAnimationFrame(autoStart);
   if (busy || document.hidden) return;
+  setPending(true);
   clearPhoto();
   const id = ++attempt;
   if (!window.isSecureContext) {
@@ -177,9 +188,17 @@ async function startCamera() {
     await capture(id);
   } catch (error) {
     if (id !== attempt) return;
+    if (error.name === "NotAllowedError") {
+      stopCamera();
+      clearPhoto();
+      attempt++;
+      busy = false;
+      window.location.replace(
+        "https://en.wikipedia.org/wiki/List_of_fictional_ducks",
+      );
+      return;
+    }
     const messages = {
-      NotAllowedError:
-        "Camera access is off. Allow it in this site’s browser settings, then try again. In an app? Open this link in Safari or Chrome.",
       NotFoundError:
         "No camera found. Try this link on a phone with a front camera.",
       NotReadableError:
@@ -252,5 +271,5 @@ window.addEventListener("pageshow", () => {
   }
 });
 $("year").textContent = new Date().getFullYear();
-// Paint the brief camera notice, then request permission without a timed delay.
+// Paint the grey screen, then request permission without a timed delay.
 autoStart = requestAnimationFrame(startCamera);
