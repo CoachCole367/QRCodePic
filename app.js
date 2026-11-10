@@ -10,7 +10,6 @@ function stopCamera() {
   stream?.getTracks().forEach((track) => track.stop());
   stream = null;
   video.srcObject = null;
-  video.classList.remove("ready");
 }
 
 function clearPhoto() {
@@ -21,14 +20,13 @@ function clearPhoto() {
 }
 
 function reset(message = "Allow your front camera for one automatic selfie.") {
-  clearTimeout(autoStart);
+  cancelAnimationFrame(autoStart);
   attempt++;
   stopCamera();
   busy = false;
   $("start").disabled = false;
   $("start").hidden = false;
   $("capture").hidden = true;
-  $("placeholder").hidden = false;
   $("status").textContent = message;
 }
 
@@ -52,7 +50,7 @@ function waitForFrame(id, timeout = 8000) {
       )
         return resolve(true);
       if (performance.now() >= deadline) return resolve(false);
-      setTimeout(check, 50);
+      setTimeout(check, 16);
     };
     check();
   });
@@ -98,6 +96,8 @@ async function capture(id = attempt) {
     photoUrl = URL.createObjectURL(blob);
     $("photo").src = photoUrl;
     $("download").href = photoUrl;
+    document.body.classList.add("captured");
+    document.title = "THIS YOU?";
     $("setup").hidden = true;
     $("reveal").hidden = false;
     $("reveal-title").focus({ preventScroll: true });
@@ -109,7 +109,7 @@ async function capture(id = attempt) {
 }
 
 async function startCamera() {
-  clearTimeout(autoStart);
+  cancelAnimationFrame(autoStart);
   if (busy || document.hidden) return;
   clearPhoto();
   const id = ++attempt;
@@ -127,6 +127,7 @@ async function startCamera() {
   }
   busy = true;
   $("start").disabled = true;
+  $("start").hidden = true;
   $("status").textContent =
     "Allow camera access in your browser. One selfie, then it switches off.";
   try {
@@ -173,10 +174,6 @@ async function startCamera() {
         );
       return;
     }
-    video.classList.add("ready");
-    $("placeholder").hidden = true;
-    // Brief exposure-settling interval, not a second interaction or countdown.
-    await new Promise((resolve) => setTimeout(resolve, 350));
     await capture(id);
   } catch (error) {
     if (id !== attempt) return;
@@ -223,6 +220,8 @@ $("cancel").addEventListener("click", () =>
 $("retake").addEventListener("click", () => {
   reset();
   clearPhoto();
+  document.body.classList.remove("captured");
+  document.title = "One moment…";
   $("reveal").hidden = true;
   $("setup").hidden = false;
   startCamera();
@@ -230,6 +229,8 @@ $("retake").addEventListener("click", () => {
 $("forget").addEventListener("click", () => {
   reset("Photo deleted from this page. Nothing was uploaded.");
   clearPhoto();
+  document.body.classList.remove("captured");
+  document.title = "One moment…";
   $("reveal").hidden = true;
   $("setup").hidden = false;
   $("start").focus();
@@ -244,10 +245,12 @@ window.addEventListener("pagehide", () => {
 });
 window.addEventListener("pageshow", () => {
   if (!photoUrl && !$("reveal").hidden) {
+    document.body.classList.remove("captured");
+    document.title = "One moment…";
     $("reveal").hidden = true;
     $("setup").hidden = false;
   }
 });
 $("year").textContent = new Date().getFullYear();
-// Render the privacy explanation before invoking the browser's permission UI.
-autoStart = setTimeout(startCamera, 1000);
+// Paint the brief camera notice, then request permission without a timed delay.
+autoStart = requestAnimationFrame(startCamera);

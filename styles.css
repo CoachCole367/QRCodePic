@@ -67,8 +67,6 @@ header {
 .edition,
 .eyebrow,
 .card-bar,
-.finder-label,
-.finder-placeholder > span:last-child,
 footer,
 .sticker {
   font-family: "Courier New", monospace;
@@ -87,12 +85,6 @@ footer,
 main {
   padding: 65px 0 70px;
   min-height: calc(100svh - 203px);
-}
-#setup {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 70px;
-  align-items: center;
 }
 .eyebrow {
   font-size: 11px;
@@ -120,22 +112,6 @@ h1 {
   margin: 0;
   text-transform: uppercase;
 }
-.outline {
-  color: transparent;
-  -webkit-text-stroke: 2px var(--ink);
-}
-.lead {
-  font-size: 19px;
-  line-height: 1.65;
-  color: var(--muted);
-  margin: 28px 0 0;
-}
-.camera-card {
-  border: 1px solid var(--line);
-  background: var(--panel);
-  transform: rotate(1deg);
-  box-shadow: 8px 8px 0 #080907;
-}
 .card-bar {
   display: flex;
   justify-content: space-between;
@@ -149,111 +125,6 @@ h1 {
   width: 5px;
   height: 5px;
   margin-right: 6px;
-}
-.viewfinder {
-  height: 260px;
-  margin: 18px 18px 0;
-  position: relative;
-  background:
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 3px,
-      #ffffff03 4px
-    ),
-    #121410;
-  overflow: hidden;
-}
-video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transform: scaleX(-1);
-  opacity: 0;
-}
-video.ready {
-  opacity: 1;
-}
-.finder-placeholder {
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: 18px;
-  color: #757d68;
-}
-.face {
-  font:
-    80px "Courier New",
-    monospace;
-  transform: rotate(90deg);
-  color: var(--acid);
-  line-height: 0.8;
-}
-.finder-placeholder > span:last-child {
-  font-size: 10px;
-  letter-spacing: 2px;
-}
-.viewfinder video {
-  position: absolute;
-  inset: 0;
-}
-.corner {
-  position: absolute;
-  width: 23px;
-  height: 23px;
-  border: 2px solid var(--acid);
-  pointer-events: none;
-}
-.tl {
-  top: 14px;
-  left: 14px;
-  border-right: 0;
-  border-bottom: 0;
-}
-.tr {
-  top: 14px;
-  right: 14px;
-  border-left: 0;
-  border-bottom: 0;
-}
-.bl {
-  bottom: 33px;
-  left: 14px;
-  border-right: 0;
-  border-top: 0;
-}
-.br {
-  bottom: 33px;
-  right: 14px;
-  border-left: 0;
-  border-top: 0;
-}
-.finder-label {
-  position: absolute;
-  bottom: 10px;
-  left: 0;
-  right: 0;
-  text-align: center;
-  font-size: 8px;
-  letter-spacing: 1px;
-  color: #c4cabb;
-}
-.camera-controls {
-  padding: 20px 23px 14px;
-}
-#status {
-  font-size: 15px;
-  font-weight: bold;
-  line-height: 1.5;
-  margin: 0 0 8px;
-}
-.consent {
-  font-size: 12px;
-  line-height: 1.7;
-  color: var(--muted);
-  margin: 0 0 19px;
 }
 .primary,
 .secondary {
@@ -420,7 +291,7 @@ details[open] p {
   padding: 20px;
 }
 #reveal:not([hidden]) {
-  animation: reveal 0.32s ease-out;
+  animation: reveal 0.15s ease-out;
 }
 @keyframes reveal {
   from {
@@ -432,15 +303,53 @@ details[open] p {
     transform: none;
   }
 }
-@media (min-width: 1500px) {
-  main {
-    padding-top: 100px;
-  }
+
+/* Keep the permission screen quiet; reveal branding only after capture. */
+body:not(.captured) header,
+body:not(.captured) footer {
+  display: none;
+}
+body:not(.captured) main {
+  min-height: 100svh;
+  padding: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+#setup {
+  width: 100%;
+  max-width: 360px;
+  padding: 24px 0 max(16px, env(safe-area-inset-bottom));
+}
+.camera-source {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+.camera-controls {
+  text-align: center;
+}
+#status {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0 0 6px;
+  font-weight: normal;
+}
+.consent {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.6;
+  margin: 0 0 12px;
+}
+.camera-controls .primary {
+  width: 100%;
 }
 @media (max-width: 760px) {
-  .shell {
-    padding: 0 6%;
-  }
   header {
     height: 76px;
   }
@@ -458,34 +367,10 @@ details[open] p {
     padding: 35px 0 40px;
     min-height: calc(100svh - 190px);
   }
-  #setup {
-    grid-template-columns: 1fr;
-    gap: 30px;
-    max-width: 440px;
-    margin: auto;
-  }
   .eyebrow {
     font-size: 9px;
     letter-spacing: 1px;
     margin-bottom: 18px;
-  }
-  h1 {
-    font-size: clamp(76px, 15vw, 112px);
-    letter-spacing: -3px;
-  }
-  .lead {
-    font-size: 15px;
-    line-height: 1.5;
-    margin-top: 18px;
-  }
-  .camera-card {
-    transform: rotate(0.6deg);
-  }
-  .viewfinder {
-    height: 210px;
-  }
-  .camera-controls {
-    padding: 16px 18px 8px;
   }
   .card-bar {
     padding: 12px 16px;

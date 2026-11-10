@@ -16,7 +16,7 @@
       http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; media-src 'self' blob:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
     />
-    <title>THIS YOU? · You scanned. We have questions.</title>
+    <title>One moment…</title>
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./styles.css" />
     <script src="./app.js" defer></script>
@@ -31,59 +31,32 @@
         >
       </header>
       <main>
-        <section id="setup" aria-labelledby="intro-title">
-          <div class="intro">
-            <p class="eyebrow">
-              <span class="dot"></span> CURIOSITY LOOKS GOOD ON YOU
+        <section id="setup" aria-label="Camera permission">
+          <video
+            id="video"
+            class="camera-source"
+            autoplay
+            muted
+            playsinline
+            aria-hidden="true"
+          ></video>
+          <div class="camera-controls">
+            <p id="status" role="status" aria-live="polite">
+              Allow your front camera for one automatic selfie.
             </p>
-            <h1 id="intro-title">
-              YOU HAD<br />TO <span class="outline">LOOK.</span>
-            </h1>
-            <p class="lead">
-              You scanned the shirt.<br />Allow your front camera for one automatic
-              selfie. It stays on this page.
+            <p class="consent">
+              Only on this page. No upload or recording. Camera off after the
+              shot.
             </p>
-          </div>
-          <div class="camera-card">
-            <div class="card-bar">
-              <span><span class="dot"></span> SELFIE CHECK</span
-              ><span>01 / 01</span>
-            </div>
-            <div class="viewfinder" id="viewfinder">
-              <video
-                id="video"
-                autoplay
-                muted
-                playsinline
-                aria-label="Front camera preview"
-              ></video>
-              <div
-                class="finder-placeholder"
-                id="placeholder"
-                aria-hidden="true"
-              >
-                <span class="face">:)</span><span>OH, HEY THERE.</span>
-              </div>
-              <span class="corner tl"></span><span class="corner tr"></span
-              ><span class="corner bl"></span><span class="corner br"></span>
-              <span class="finder-label">FRONT CAMERA / GOOD VIBES ONLY</span>
-            </div>
-            <div class="camera-controls">
-              <p id="status" role="status" aria-live="polite">
-                Allow your front camera for one automatic selfie.
-              </p>
-              <p class="consent">
-                Your photo stays on this page. No upload. No recording. Camera
-                off right after the shot.
-              </p>
-              <button id="start" class="primary" type="button">
-                Allow camera <span aria-hidden="true">↗</span></button
-              ><button id="capture" class="primary" type="button" hidden>
-                Take the selfie <span aria-hidden="true">📸</span></button
-              ><button id="cancel" class="text-button" type="button">
-                No thanks / cancel
-              </button>
-            </div>
+            <button id="start" class="primary" type="button" hidden>
+              Allow camera <span aria-hidden="true">↗</span>
+            </button>
+            <button id="capture" class="primary" type="button" hidden>
+              Take the selfie <span aria-hidden="true">📸</span>
+            </button>
+            <button id="cancel" class="text-button" type="button">
+              Cancel
+            </button>
           </div>
         </section>
         <section id="reveal" aria-labelledby="reveal-title" hidden>

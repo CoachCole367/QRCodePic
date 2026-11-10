@@ -257,6 +257,34 @@ test("narrow and desktop layouts fit without horizontal overflow", async ({
   }
 });
 
+test("opening stays nearly blank and requests permission without a timed delay", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    window.cameraRequestedAt = null;
+    navigator.mediaDevices.getUserMedia = () => {
+      window.cameraRequestedAt = performance.now();
+      return new Promise(() => {});
+    };
+  });
+  await page.goto("/");
+  await expect
+    .poll(() => page.evaluate(() => window.cameraRequestedAt))
+    .not.toBeNull();
+  expect(await page.evaluate(() => window.cameraRequestedAt)).toBeLessThan(
+    1000,
+  );
+  await expect(page.locator("header")).toBeHidden();
+  await expect(page.locator("footer")).toBeHidden();
+  await expect(page.locator("#reveal")).toBeHidden();
+  await expect(page.locator("#start")).toBeHidden();
+  await expect(page.locator("#status")).toBeVisible();
+  await expect(page.locator(".consent")).toBeVisible();
+  const videoSize = await page.locator("#video").boundingBox();
+  expect(videoSize.width).toBe(1);
+  expect(videoSize.height).toBe(1);
+});
+
 test("printed PNG decodes to exactly the configured HTTPS destination", async () => {
   const { url } = JSON.parse(await readFile("site.config.json", "utf8"));
   const png = PNG.sync.read(await readFile("print/shirt-qr-2400.png"));
