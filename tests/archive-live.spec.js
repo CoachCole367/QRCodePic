@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 // Explicit opt-in only: creates one synthetic camera photo, then deletes it.
 test("live archive accepts a synthetic selfie and keeps it owner-only", async ({
   page,
+  browser,
 }) => {
   test.skip(
     process.env.LIVE_ARCHIVE !== "1",
@@ -53,6 +54,40 @@ test("live archive accepts a synthetic selfie and keeps it owner-only", async ({
     });
     expect(gallery.status).toBe(200);
     expect((await gallery.text()).includes(id)).toBe(true);
+    // Exercise the actual form, not a Node POST with a manually supplied Origin.
+    const ownerContext = await browser.newContext({
+      httpCredentials: { username: "owner", password, origin },
+    });
+    try {
+      const ownerPage = await ownerContext.newPage();
+      const ownerResponse = await ownerPage.goto(`${origin}/archive`);
+      expect(ownerResponse.headers()["referrer-policy"]).toBe("same-origin");
+      ownerPage.on("dialog", (dialog) => dialog.accept());
+      const form = ownerPage
+        .locator("form")
+        .filter({ has: ownerPage.locator(`input[name="id"][value="${id}"]`) });
+      const submitted = ownerPage.waitForResponse(
+        (response) =>
+          response.url() === `${origin}/archive/delete` &&
+          response.request().method() === "POST",
+      );
+      await form.getByRole("button", { name: "Delete photo" }).click();
+      const deletion = await submitted;
+      expect(deletion.request().headers().origin).toBe(origin);
+      expect(deletion.status()).toBe(303);
+      await expect(
+        ownerPage.locator(`input[name="id"][value="${id}"]`),
+      ).toHaveCount(0);
+      expect(
+        (
+          await fetch(`${origin}/photo/${id}.jpg`, {
+            headers: { authorization },
+          })
+        ).status,
+      ).toBe(404);
+    } finally {
+      await ownerContext.close();
+    }
   } finally {
     if (id) {
       const deletion = await fetch(`${origin}/archive/delete`, {

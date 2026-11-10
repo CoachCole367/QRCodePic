@@ -85,6 +85,7 @@ test("owner can list and read images while an incorrect password cannot", async 
     env,
   );
   assert.equal(gallery.status, 200);
+  assert.equal(gallery.headers.get("Referrer-Policy"), "same-origin");
   assert.match(await gallery.text(), /PRIVATE ARCHIVE/);
   const photo = await worker.fetch(
     request(`/photo/${id}.jpg`, { headers: { authorization } }),
@@ -156,6 +157,18 @@ test("owner deletion requires authentication, POST, and same-origin CSRF check",
   );
   assert.equal(badOrigin.status, 403);
   assert.equal(env.photos.size, 1);
+  for (const Origin of ["null", ""]) {
+    const missingOrigin = await worker.fetch(
+      request("/archive/delete", {
+        method: "POST",
+        headers: { authorization, Origin },
+        body: new URLSearchParams({ id }),
+      }),
+      env,
+    );
+    assert.equal(missingOrigin.status, 403);
+    assert.equal(env.photos.size, 1);
+  }
   const response = await worker.fetch(
     request("/archive/delete", {
       method: "POST",
