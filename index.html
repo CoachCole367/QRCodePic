@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#111210" />
+    <meta
+      name="description"
+      content="You scanned. We have questions. A camera prank that stays entirely on your phone."
+    />
+    <meta name="referrer" content="no-referrer" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; media-src 'self' blob:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <title>THIS YOU? · You scanned. We have questions.</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <div class="shell">
+      <header>
+        <a class="wordmark" href="./" aria-label="This You home"
+          >THIS YOU<span>?</span></a
+        ><span class="edition"
+          >THE SHIRT WAS A TRAP. <span aria-hidden="true">↗</span></span
+        >
+      </header>
+      <main>
+        <section id="setup" aria-labelledby="intro-title">
+          <div class="intro">
+            <p class="eyebrow">
+              <span class="dot"></span> CURIOSITY LOOKS GOOD ON YOU
+            </p>
+            <h1 id="intro-title">
+              YOU HAD<br />TO <span class="outline">LOOK.</span>
+            </h1>
+            <p class="lead">
+              You scanned the shirt.<br />Allow your front camera for one automatic
+              selfie. It stays on this page.
+            </p>
+          </div>
+          <div class="camera-card">
+            <div class="card-bar">
+              <span><span class="dot"></span> SELFIE CHECK</span
+              ><span>01 / 01</span>
+            </div>
+            <div class="viewfinder" id="viewfinder">
+              <video
+                id="video"
+                autoplay
+                muted
+                playsinline
+                aria-label="Front camera preview"
+              ></video>
+              <div
+                class="finder-placeholder"
+                id="placeholder"
+                aria-hidden="true"
+              >
+                <span class="face">:)</span><span>OH, HEY THERE.</span>
+              </div>
+              <span class="corner tl"></span><span class="corner tr"></span
+              ><span class="corner bl"></span><span class="corner br"></span>
+              <span class="finder-label">FRONT CAMERA / GOOD VIBES ONLY</span>
+            </div>
+            <div class="camera-controls">
+              <p id="status" role="status" aria-live="polite">
+                Allow your front camera for one automatic selfie.
+              </p>
+              <p class="consent">
+                Your photo stays on this page. No upload. No recording. Camera
+                off right after the shot.
+              </p>
+              <button id="start" class="primary" type="button">
+                Allow camera <span aria-hidden="true">↗</span></button
+              ><button id="capture" class="primary" type="button" hidden>
+                Take the selfie <span aria-hidden="true">📸</span></button
+              ><button id="cancel" class="text-button" type="button">
+                No thanks / cancel
+              </button>
+            </div>
+          </div>
+        </section>
+        <section id="reveal" aria-labelledby="reveal-title" hidden>
+          <p class="eyebrow">
+            <span class="dot"></span> CURIOSITY HAS CONSEQUENCES
+          </p>
+          <h1 id="reveal-title" tabindex="-1">THIS YOU?</h1>
+          <figure class="photo-card">
+            <div class="card-bar">
+              <span>EXHIBIT A: YOU</span><span>100% BUSTED</span>
+            </div>
+            <img id="photo" alt="Your freshly captured selfie" />
+            <figcaption>
+              Caught in 4K <span aria-hidden="true">📸</span>
+            </figcaption>
+            <span class="sticker" aria-hidden="true">GOT<br />YOU.</span>
+          </figure>
+          <p class="reveal-copy">All that curiosity. All this evidence.</p>
+          <div class="actions">
+            <button id="retake" type="button" class="secondary">
+              ↻ &nbsp; Retake</button
+            ><a id="download" class="primary" download="this-you.png"
+              >Save the evidence <span aria-hidden="true">↓</span></a
+            >
+          </div>
+          <button id="forget" class="text-button" type="button">
+            Delete my photo
+          </button>
+          <p id="save-note" class="save-note">
+            If Save opens the image, touch and hold it to save.
+          </p>
+        </section>
+        <noscript
+          ><p class="no-script">
+            Enable JavaScript to use the camera. Nothing is captured while
+            JavaScript is off.
+          </p></noscript
+        >
+      </main>
+      <footer>
+        <span
+          ><span class="privacy-icon" aria-hidden="true">◇</span> YOUR FACE.
+          YOUR PHONE. THAT’S IT.</span
+        >
+        <details>
+          <summary>The privacy bit</summary>
+          <p>
+            One still photo, kept in this tab’s memory. No microphone, accounts,
+            analytics, cookies, or photo uploads. Leaving or hiding the page
+            stops the camera; closing it clears the photo. Saving downloads a
+            copy to your device. Your hosting provider may keep standard access
+            logs.
+          </p>
+        </details>
+        <span class="footer-end"
+          >A VERY UNNECESSARY WEBSITE. © <span id="year">2026</span></span
+        >
+      </footer>
+    </div>
+  </body>
+</html>
